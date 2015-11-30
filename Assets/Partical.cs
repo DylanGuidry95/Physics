@@ -17,8 +17,6 @@ public class Partical : MonoBehaviour
 	// Update is called once per frame
 	void Update ()
     {
-        m_Velocity = m_Velocity.normalized;
-        m_Acceleration = (m_Velocity - m_Velocity.normalized) / Time.deltaTime;
-        m_Pos += m_Velocity + (m_Acceleration * Time.deltaTime);
+        transform.position = m_Pos;
     }
 }

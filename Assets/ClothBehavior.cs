@@ -15,10 +15,7 @@ public class ClothBehavior : MonoBehaviour
     public float LengthOfCloth = 10; //Length of Cloth
     public float WidthOfCloth = 10; //Width of Cloth
 
-
-    public List<GameObject> TriPoint1 = new List<GameObject>();
-    public List<GameObject> TriPoint2 = new List<GameObject>();
-    public List<GameObject> TriPoint3 = new List<GameObject>();
+    public float tension;
 
     // Use this for initialization
     void Start () {
@@ -44,28 +41,40 @@ public class ClothBehavior : MonoBehaviour
                 partical.GetComponent<Partical>().m_Pos = new Vector3(i, j, 0);
             }
         }
-        SetPoints();
     }
 
-    void SetPoints()
+    Vector3 CalcSpringDamp(GameObject partical)
     {
-        foreach(GameObject p in PARTICALS)
+        Vector3 damp = Vector3.zero;
+
+        foreach (GameObject p in PARTICALS)
         {
-            if (PARTICALS.IndexOf(p) % 3 == 0)
-                TriPoint1.Add(p);
-            else if (PARTICALS.IndexOf(p) % 3 == 1)
-                TriPoint1.Add(p);
-            else if (PARTICALS.IndexOf(p) % 3 == 2)
-                TriPoint1.Add(p);
+            if(p != partical)
+            {
+                float e = CalcDis(partical.GetComponent<Partical>().m_Pos, p.GetComponent<Partical>().m_Pos);
+                float v1 = e * partical.GetComponent<Partical>().m_Velocity.magnitude;
+                float v2 = e * p.GetComponent<Partical>().m_Velocity.magnitude;
+                damp = tension * new Vector3(e,v1,v2);
+            }
         }
 
+        return damp;
     }
 
     void MoveCloth()
     {
         foreach (GameObject p in PARTICALS)
         {
-
+            Vector3 SpringDamper = CalcSpringDamp(p);
+            p.GetComponent<Partical>().m_Velocity += SpringDamper;
+            p.GetComponent<Partical>().m_Pos += p.GetComponent<Partical>().m_Velocity;  
         }
+    }
+
+    float CalcDis(Vector3 pos1, Vector3 pos2)
+    {
+        float dis;
+        dis = ((pos2.y - pos1.y) * (pos2.y - pos1.y)) + ((pos2.x - pos1.x) * (pos2.x - pos1.x)) + ((pos2.z - pos1.z) * (pos2.z - pos1.z));
+        return Mathf.Sqrt(dis);
     }
 }
