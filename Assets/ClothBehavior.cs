@@ -15,7 +15,7 @@ public class ClothBehavior : MonoBehaviour
     public float LengthOfCloth = 10; //Length of Cloth
     public float WidthOfCloth = 10; //Width of Cloth
 
-    public float tension;
+
 
     // Use this for initialization
     void Start () {
@@ -43,31 +43,13 @@ public class ClothBehavior : MonoBehaviour
         }
     }
 
-    Vector3 CalcSpringDamp(GameObject partical)
-    {
-        Vector3 damp = Vector3.zero;
-
-        foreach (GameObject p in PARTICALS)
-        {
-            if(p != partical)
-            {
-                float e = CalcDis(partical.GetComponent<Partical>().m_Pos, p.GetComponent<Partical>().m_Pos);
-                float v1 = e * partical.GetComponent<Partical>().m_Velocity.magnitude;
-                float v2 = e * p.GetComponent<Partical>().m_Velocity.magnitude;
-                damp = tension * new Vector3(e,v1,v2);
-            }
-        }
-
-        return damp;
-    }
-
     void MoveCloth()
     {
         foreach (GameObject p in PARTICALS)
         {
-            Vector3 SpringDamper = CalcSpringDamp(p);
-            p.GetComponent<Partical>().m_Velocity += SpringDamper;
-            p.GetComponent<Partical>().m_Pos += p.GetComponent<Partical>().m_Velocity;  
+            Vector3 SpringDamper = gameObject.GetComponent<SpringDamper>().CalcSpringDamp(p);
+            p.GetComponent<Partical>().m_Velocity = p.GetComponent<Partical>().m_Velocity.normalized + SpringDamper;
+            p.GetComponent<Partical>().m_Pos = p.GetComponent<Partical>().m_Pos + p.GetComponent<Partical>().m_Velocity.normalized;
         }
     }
 

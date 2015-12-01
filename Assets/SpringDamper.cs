@@ -7,35 +7,41 @@ public class SpringDamper : MonoBehaviour
     public float DampingFactor;    //kd
     public float RestLength;       //lo
 
-    Particle p1, p2;
-	// Use this for initialization
-	void Start () {
+    public Particle p1;
+    public Particle p2;
+
+    public float tension;
+
+    // Use this for initialization
+    void Start ()
+    {
 	
 	}
 	
 	// Update is called once per frame
-	void Update () {
-	
+	void Update ()
+    {
+	    
 	}
 
-    void ComputeForce()
+    void SetConnection(Particle a, Particle b)
     {
-        float springForce = -SpringCosntant * CalcDis(p1.position, p2.position);
-        float damForce = -DampingFactor * DiffInVelo(p1.velocity, p2.velocity);
-        float springDampaner = springForce - damForce;
+        p1 = a;
+        p2 = b;
     }
 
-    float DiffInVelo(Vector3 velo1, Vector3 velo2)
+    public Vector3 CalcSpringDamp(GameObject partical)
     {
-        float diff;
-        diff = ((velo2.y - velo1.y) * (velo2.y - velo1.y)) + ((velo2.x - velo1.x) * (velo2.x - velo1.x)) + ((velo2.z - velo1.z) * (velo2.z - velo1.z));
-        return Mathf.Sqrt(diff);
-    }
+        Vector3 a = Vector3.zero;
+        Vector3 e = Vector3.zero;
+        Vector3 v = Vector3.zero;
+        foreach (GameObject p in gameObject.GetComponent<ClothBehavior>().PARTICALS)
+        {
+            e = p.GetComponent<Partical>().m_Pos - partical.GetComponent<Partical>().m_Pos;
+            v = p.GetComponent<Partical>().m_Velocity.normalized - partical.GetComponent<Partical>().m_Velocity.normalized;
+            a = e - v;
+        }
+        return a * (tension / gameObject.GetComponent<ClothBehavior>().PARTICALS.Count);
 
-    float CalcDis(Vector3 pos1, Vector3 pos2)
-    {
-        float dis;
-        dis = ((pos2.y - pos1.y) * (pos2.y - pos1.y)) + ((pos2.x - pos1.x) * (pos2.x - pos1.x)) + ((pos2.z - pos1.z) * (pos2.z - pos1.z));
-        return Mathf.Sqrt(dis);
     }
 }
