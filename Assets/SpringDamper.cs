@@ -7,10 +7,11 @@ public class SpringDamper : MonoBehaviour
     public float DampingFactor;    //kd
     public float RestLength;       //lo
 
-    public Particle p1;
-    public Particle p2;
+    public GameObject p1;
+    public GameObject p2;
 
-    public float tension;
+    public float viscous; //coeficient for damp factor
+    public float tension; //coeficient for rest
 
     // Use this for initialization
     void Start ()
@@ -18,30 +19,32 @@ public class SpringDamper : MonoBehaviour
 	
 	}
 	
+    void MakeSprings()
+    {
+
+    }
+
 	// Update is called once per frame
 	void Update ()
     {
 	    
 	}
 
-    void SetConnection(Particle a, Particle b)
-    {
-        p1 = a;
-        p2 = b;
-    }
-
     public Vector3 CalcSpringDamp(GameObject partical)
     {
         Vector3 a = Vector3.zero;
         Vector3 e = Vector3.zero;
         Vector3 v = Vector3.zero;
+
+
+
         foreach (GameObject p in gameObject.GetComponent<ClothBehavior>().PARTICALS)
         {
             e = p.GetComponent<Partical>().m_Pos - partical.GetComponent<Partical>().m_Pos;
             v = p.GetComponent<Partical>().m_Velocity.normalized - partical.GetComponent<Partical>().m_Velocity.normalized;
             a = e - v;
         }
-        return a * (tension / gameObject.GetComponent<ClothBehavior>().PARTICALS.Count);
+        return a * (tension / gameObject.GetComponentInParent<ClothBehavior>().PARTICALS.Count);
 
     }
 }

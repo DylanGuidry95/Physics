@@ -12,13 +12,14 @@ public class ClothBehavior : MonoBehaviour
 
     [Header("Size of Cloth")]
     [Space(10)]
-    public float LengthOfCloth = 10; //Length of Cloth
-    public float WidthOfCloth = 10; //Width of Cloth
+    public int LengthOfCloth = 10; //Length of Cloth
+    public int WidthOfCloth = 10; //Width of Cloth
 
 
 
     // Use this for initialization
-    void Start () {
+    void Start ()
+    {
         DrawCloth();
 	}
 	
@@ -32,7 +33,7 @@ public class ClothBehavior : MonoBehaviour
     {
         for(int i = 0; i < LengthOfCloth; i++)
         {
-            for (int j = 0; j < WidthOfCloth; j++)
+            for (int j = WidthOfCloth; j > 0; j--)
             {
                 GameObject partical = Instantiate(ParticalPrefab) as GameObject;
                 partical.transform.parent = gameObject.transform ;
@@ -49,6 +50,7 @@ public class ClothBehavior : MonoBehaviour
         {
             Vector3 SpringDamper = gameObject.GetComponent<SpringDamper>().CalcSpringDamp(p);
             p.GetComponent<Partical>().m_Velocity = p.GetComponent<Partical>().m_Velocity.normalized + SpringDamper;
+            //p.GetComponent<Partical>().m_Velocity = p.GetComponent<Partical>().m_Velocity.normalized;
             p.GetComponent<Partical>().m_Pos = p.GetComponent<Partical>().m_Pos + p.GetComponent<Partical>().m_Velocity.normalized;
         }
     }
