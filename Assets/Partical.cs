@@ -10,7 +10,8 @@ public class Partical : MonoBehaviour
     public Vector3 m_Force;             //f     {f = Ef}
     public Vector3 m_Momentum;          //p     {p = m * v}
 	// Use this for initialization
-	void Start () {
+	void Start ()
+    {
 	
 	}
 	

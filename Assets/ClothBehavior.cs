@@ -7,52 +7,89 @@ public class ClothBehavior : MonoBehaviour
     GameObject target;
     public GameObject ParticalPrefab; //used to hold a refrence to are prefab
     public List<GameObject> PARTICALS = new List<GameObject>(); //List that hold all of the boids 
+    public GameObject SpringsPrefab; //used to refrence the spring prefab
+    public List<GameObject> SPRINGS = new List<GameObject>(); //List of all the springs in the system
 
-    public float vLimit;
+    public float vLimit; //Velocity Limit
 
     [Header("Size of Cloth")]
     [Space(10)]
-    public int LengthOfCloth = 10; //Length of Cloth
-    public int WidthOfCloth = 10; //Width of Cloth
+    public int Rows = 10; //Length of Cloth
+    public int Cols = 10; //Width of Cloth
 
 
 
     // Use this for initialization
     void Start ()
     {
-        DrawCloth();
+        SpawnParticles();
+        foreach(GameObject p in PARTICALS)
+            SpawnSprings(p);
 	}
 	
 	// Update is called once per frame
 	void Update ()
     {
-        MoveCloth();
+        //MoveCloth();
 	}
 
-    void DrawCloth()
+    void CalcForces()
     {
-        for(int i = 0; i < LengthOfCloth; i++)
+        foreach (GameObject p in PARTICALS)
         {
-            for (int j = WidthOfCloth; j > 0; j--)
+            p.GetComponent<Partical>().m_Acceleration = p.GetComponent<Partical>().m_Mass * -9.81f;
+        }
+    }
+
+    void SpawnSprings(GameObject part)
+    {
+        foreach (GameObject p in PARTICALS)
+        {
+            if(p != part)
+            {
+                if (p.GetComponent<Partical>().m_Pos.x == p.GetComponent<Partical>().m_Pos.x % Cols && p.GetComponent<Partical>().m_Pos.y == p.GetComponent<Partical>().m_Pos.y % Rows)
+                {
+                    GameObject spring = Instantiate(SpringsPrefab) as GameObject;
+                    spring.GetComponent<SpringDamper>().p1 = part;
+                    spring.GetComponent<SpringDamper>().p2 = p;
+                    spring.GetComponent<SpringDamper>().DrawSpring();
+                }
+            }
+
+        }
+    }
+
+    [ContextMenu ("SpawnPart")]
+    void SpawnParticles()
+    {
+        int t = 0;
+        int y = 0;
+
+        for (int i = 0; i < Rows; i++)
+        {
+            for (int j = 0; j < Cols; j++)
             {
                 GameObject partical = Instantiate(ParticalPrefab) as GameObject;
-                partical.transform.parent = gameObject.transform ;
+                partical.transform.parent = gameObject.transform;
                 PARTICALS.Add(partical);
 
-                partical.GetComponent<Partical>().m_Pos = new Vector3(i, j, 0);
+                partical.GetComponent<Partical>().m_Pos = new Vector3(j + y, i + t, 0);
+                y++;
             }
+            y = 0;
+            t++;
         }
     }
 
     void MoveCloth()
     {
-        foreach (GameObject p in PARTICALS)
-        {
-            Vector3 SpringDamper = gameObject.GetComponent<SpringDamper>().CalcSpringDamp(p);
-            p.GetComponent<Partical>().m_Velocity = p.GetComponent<Partical>().m_Velocity.normalized + SpringDamper;
-            //p.GetComponent<Partical>().m_Velocity = p.GetComponent<Partical>().m_Velocity.normalized;
-            p.GetComponent<Partical>().m_Pos = p.GetComponent<Partical>().m_Pos + p.GetComponent<Partical>().m_Velocity.normalized;
-        }
+        //foreach (GameObject p in PARTICALS)
+        //{
+        //    Vector3 SpringDamper = gameObject.GetComponent<SpringDamper>().CalcSpringDamp(p);
+        //    p.GetComponent<Partical>().m_Velocity = p.GetComponent<Partical>().m_Velocity.normalized + SpringDamper;
+        //    //p.GetComponent<Partical>().m_Velocity = p.GetComponent<Partical>().m_Velocity.normalized;
+        //    p.GetComponent<Partical>().m_Pos = p.GetComponent<Partical>().m_Pos + p.GetComponent<Partical>().m_Velocity.normalized;
+        //}
     }
 
     float CalcDis(Vector3 pos1, Vector3 pos2)
