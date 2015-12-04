@@ -7,8 +7,8 @@ public class SpringDamper : MonoBehaviour
     public float b; //damping factor
     public float l; //rest length
 
-    public GameObject p1;
-    public GameObject p2;
+    public float e; //place holder
 
-    public float tension = 200; 
+    public Partical p1;
+    public Partical p2;
 }

@@ -22,6 +22,10 @@ public class Partical : MonoBehaviour
 	// Update is called once per frame
 	void Update ()
     {
+        if(number == 1)
+        {
+            m_Pos = new Vector3(0, 5, 0);
+        }
         transform.position = m_Pos;
     }
 }
