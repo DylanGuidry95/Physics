@@ -9,15 +9,19 @@ public class Partical : MonoBehaviour
     public Vector3 m_Acceleration;      //a     {a = (1/m) *f
     public Vector3 m_Force;             //f     {f = Ef}
     public Vector3 m_Momentum;          //p     {p = m * v}
+    public int number;
+
+    public bool locked;
+
 	// Use this for initialization
 	void Start ()
     {
-	
+
 	}
 	
 	// Update is called once per frame
 	void Update ()
     {
-        transform.position = m_Pos + m_Velocity.normalized;
+        transform.position = m_Pos;
     }
 }
