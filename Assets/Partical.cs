@@ -9,7 +9,9 @@ public class Partical : MonoBehaviour
     public Vector3 m_Acceleration;      //a     {a = (1/m) *f
     public Vector3 m_Force;             //f     {f = Ef}
     public Vector3 m_Momentum;          //p     {p = m * v}
-    public int number;
+
+    public int RowNum;
+    public int ColNum;
 
     public bool locked;
 
@@ -22,10 +24,6 @@ public class Partical : MonoBehaviour
 	// Update is called once per frame
 	void Update ()
     {
-        if(number == 1)
-        {
-            m_Pos = new Vector3(0, 5, 0);
-        }
         transform.position = m_Pos;
     }
 }

@@ -25,19 +25,17 @@ public class ClothBehavior : MonoBehaviour
 
     void SpawnSprings(Partical part)
     {
+        SpringDamper spring = Instantiate(SpringsPrefab);
+
+        spring.GetComponent<SpringDamper>().p1 = part; //sets partical 1
         foreach (Partical p in PARTICALS)
         {
             if (p != part)
             {
-                if (part.GetComponent<Partical>().m_Pos.x == p.GetComponent<Partical>().m_Pos.x % (Cols) && part.GetComponent<Partical>().m_Pos.y == p.GetComponent<Partical>().m_Pos.y % (Rows - 1))
+                if(p.ColNum == (part.ColNum - 1))
                 {
-                    SpringDamper spring = Instantiate(SpringsPrefab);
-
-                    spring.GetComponent<SpringDamper>().p1 = part; //sets partical 1
-
-                    spring.GetComponent<SpringDamper>().p2 = p; //set partical 2
-
-                    SPRINGS.Add(spring);
+                    spring.p2 = p;
+                    Debug.DrawLine(spring.p1.m_Pos, spring.p2.m_Pos, Color.yellow, 200);
                 }
             }
         }
@@ -48,15 +46,16 @@ public class ClothBehavior : MonoBehaviour
     {
         int t = 5;
         int y = 0;
-        int pos = 1; 
+        int pos = 1;
         for (int i = 0; i < Rows; i++)
         {
             for (int j = 0; j < Cols; j++)
             {
                 Partical partical = Instantiate(ParticalPrefab);
                 partical.gameObject.name = "Node" + pos;
-                partical.number = pos;
                 pos++;
+                partical.ColNum = j;
+                partical.RowNum = i;
                 partical.transform.parent = gameObject.transform;
                 PARTICALS.Add(partical);
 
@@ -120,7 +119,7 @@ public class ClothBehavior : MonoBehaviour
 
     void Update()
     {
-        ClothMovement();
+        //ClothMovement();
     }
 
     float CalcDis(Vector3 pos1, Vector3 pos2)
