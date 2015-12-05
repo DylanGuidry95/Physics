@@ -27,29 +27,55 @@ public class ClothBehavior : MonoBehaviour
 
     void SpawnSprings()
     {
-        Partical[] part = PARTICALS.ToArray();
         for(int i = 0; i <= PARTICALS.Count; i++)
         {
             SpringDamper spring = Instantiate(SpringsPrefab);
-            spring.p1 = part[i];
 
-            if (part[i].pos % Cols != Cols - 1)
+            //horizontal
+            if ((i % Cols) != (Cols - 1))
             {
-                Debug.Log("hor");
-                spring.p2 = part[i + 1];
-
-                Debug.DrawLine(spring.p1.m_Pos, spring.p2.m_Pos, Color.yellow, 200);
-                SPRINGS.Add(spring);
+                Debug.Log("Horizontal");
+                spring.p1 = PARTICALS[i];
+                spring.p2 = PARTICALS[i + 1];
             }
             
-            else if(part[i].pos < (Cols * Rows) - Cols)
+            if((i % Cols) != (Cols - 1) && (i % Cols) != (Cols - 2))
             {
-                Debug.Log("vert");
-                spring.p2 = part[i + Cols];
-
-                Debug.DrawLine(spring.p1.m_Pos, spring.p2.m_Pos, Color.yellow, 200);
-                SPRINGS.Add(spring);
+                spring.p1 = PARTICALS[i];
+                spring.p2 = PARTICALS[i + 2];
             }
+
+            //Vertical Springs
+            if(i < ((Cols * Rows) - Cols))
+            {
+                Debug.Log("Vertical");
+                spring.p1 = PARTICALS[i];
+                spring.p2 = PARTICALS[i + Cols];
+            }
+
+            if(i < ((Cols * Rows) - Cols * 2))
+            {
+                spring.p1 = PARTICALS[i];
+                spring.p2 = PARTICALS[i + Cols * 2];
+            }
+
+            //Dag Down
+            if(((i % Cols) != (Cols - 1)) && ( i < ((Cols * Rows) - Rows)))
+            {
+                Debug.Log("Dag Down");
+                spring.p1 = PARTICALS[i];
+                spring.p2 = PARTICALS[i + Cols + 1];
+            }
+
+            //Dag Up
+            if((i % Cols != 0) && (i < (Cols * Rows) - Rows))
+            {
+                Debug.Log("Dag Up");
+                spring.p1 = PARTICALS[i];
+                spring.p2 = PARTICALS[i + Cols - 1];
+            }
+            Debug.DrawLine(spring.p1.m_Pos, spring.p2.m_Pos, Color.yellow, 200);
+            SPRINGS.Add(spring);
         }
 
     }
@@ -108,7 +134,6 @@ public class ClothBehavior : MonoBehaviour
             Vector3 disBetween = s.p1.m_Pos - s.p2.m_Pos;
             Vector3 disBetweenNorm = disBetween.normalized;
 
-            float dir = s.e / s.l;
             float dis = CalcDis(s.p1.m_Pos, s.p2.m_Pos);
             float springForce = -s.k * (s.l - dis);
 
