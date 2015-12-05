@@ -10,8 +10,7 @@ public class Partical : MonoBehaviour
     public Vector3 m_Force;             //f     {f = Ef}
     public Vector3 m_Momentum;          //p     {p = m * v}
 
-    public int RowNum;
-    public int ColNum;
+    public int pos;
 
     public bool locked;
 

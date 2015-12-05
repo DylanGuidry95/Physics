@@ -7,13 +7,14 @@ public class ClothBehavior : MonoBehaviour
     GameObject target;
     public Partical ParticalPrefab; //used to hold a refrence to are prefab
     public List<Partical> PARTICALS = new List<Partical>(); //List that hold all of the boids 
+    [Space(10)]
     public SpringDamper SpringsPrefab; //used to refrence the spring prefab
     public List<SpringDamper> SPRINGS = new List<SpringDamper>(); //List of all the springs in the system
 
     [Header("Size of Cloth")]
     [Space(10)]
-    public int Rows = 10; //Length of Cloth
-    public int Cols = 10; //Width of Cloth
+    public int Rows; //Length of Cloth
+    public int Cols; //Width of Cloth
 
     public float gCoeficient = 1;
 
@@ -21,24 +22,36 @@ public class ClothBehavior : MonoBehaviour
     void Start ()
     {
         SpawnParticles();
-	}
+        SpawnSprings();
+    }
 
-    void SpawnSprings(Partical part)
+    void SpawnSprings()
     {
-        SpringDamper spring = Instantiate(SpringsPrefab);
-
-        spring.GetComponent<SpringDamper>().p1 = part; //sets partical 1
-        foreach (Partical p in PARTICALS)
+        Partical[] part = PARTICALS.ToArray();
+        for(int i = 0; i <= PARTICALS.Count; i++)
         {
-            if (p != part)
+            SpringDamper spring = Instantiate(SpringsPrefab);
+            spring.p1 = part[i];
+
+            if (part[i].pos % Cols != Cols - 1)
             {
-                if(p.ColNum == (part.ColNum - 1))
-                {
-                    spring.p2 = p;
-                    Debug.DrawLine(spring.p1.m_Pos, spring.p2.m_Pos, Color.yellow, 200);
-                }
+                Debug.Log("hor");
+                spring.p2 = part[i + 1];
+
+                Debug.DrawLine(spring.p1.m_Pos, spring.p2.m_Pos, Color.yellow, 200);
+                SPRINGS.Add(spring);
+            }
+            
+            else if(part[i].pos < (Cols * Rows) - Cols)
+            {
+                Debug.Log("vert");
+                spring.p2 = part[i + Cols];
+
+                Debug.DrawLine(spring.p1.m_Pos, spring.p2.m_Pos, Color.yellow, 200);
+                SPRINGS.Add(spring);
             }
         }
+
     }
 
     [ContextMenu ("SpawnPart")]
@@ -46,6 +59,7 @@ public class ClothBehavior : MonoBehaviour
     {
         int t = 5;
         int y = 0;
+        int x = 0;
         int pos = 1;
         for (int i = 0; i < Rows; i++)
         {
@@ -53,9 +67,9 @@ public class ClothBehavior : MonoBehaviour
             {
                 Partical partical = Instantiate(ParticalPrefab);
                 partical.gameObject.name = "Node" + pos;
+                partical.pos = pos;
+                x++;
                 pos++;
-                partical.ColNum = j;
-                partical.RowNum = i;
                 partical.transform.parent = gameObject.transform;
                 PARTICALS.Add(partical);
 
@@ -65,10 +79,6 @@ public class ClothBehavior : MonoBehaviour
             y = 0;
             t++;
         }
-
-        foreach (Partical p in PARTICALS)
-            SpawnSprings(p);
-
     }
 
     void ClothMovement()
