@@ -16,7 +16,15 @@ public class ClothBehavior : MonoBehaviour
     public int Height; //Length of Cloth
     public int Width; //Width of Cloth
 
-    public float gCoeficient = 1;
+    public float gCoeficient;
+
+    public Vector3 Gravity;
+
+    public float k; //tensioin
+    public float b; //damping factor
+
+    public bool net;
+    public bool drape;
 
     // Use this for initialization
     void Start ()
@@ -28,20 +36,23 @@ public class ClothBehavior : MonoBehaviour
     void SpawnSprings()
     {
         for(int i = 0; i < PARTICALS.Count; i++)
-        { 
+        {
             //horizontal
             if ((i % Width) != (Width - 1))
             {
                 SpringDamper spring = Instantiate(SpringsPrefab);
-                Debug.Log("Horizontal");
-                spring.MakeSpring(PARTICALS[i], PARTICALS[i + 1]);
+                spring.transform.parent = gameObject.transform;
+                float l = CalcDis(PARTICALS[i].transform.position, PARTICALS[i + 1].transform.position);
+                spring.MakeSpring(PARTICALS[i], PARTICALS[i + 1], l);
                 SPRINGS.Add(spring);
             }
 
             if ((i % Width) != (Width - 1) && (i % Width) != (Width - 2))
             {
                 SpringDamper spring = Instantiate(SpringsPrefab);
-                spring.MakeSpring(PARTICALS[i], PARTICALS[i + 2]);
+                spring.transform.parent = gameObject.transform;
+                float l = CalcDis(PARTICALS[i].transform.position, PARTICALS[i + 2].transform.position);
+                spring.MakeSpring(PARTICALS[i], PARTICALS[i + 2], l);
                 SPRINGS.Add(spring);
             }
 
@@ -49,15 +60,18 @@ public class ClothBehavior : MonoBehaviour
             if (i < ((Width * Height) - Width))
             {
                 SpringDamper spring = Instantiate(SpringsPrefab);
-                spring.MakeSpring(PARTICALS[i], PARTICALS[i + Width]);
-                Debug.Log("Vertical");
+                spring.transform.parent = gameObject.transform;
+                float l = CalcDis(PARTICALS[i].transform.position, PARTICALS[i + Width].transform.position);
+                spring.MakeSpring(PARTICALS[i], PARTICALS[i + Width], l);
                 SPRINGS.Add(spring);
             }
 
             if (i < ((Width * Height) - Width * 2))
             {
                 SpringDamper spring = Instantiate(SpringsPrefab);
-                spring.MakeSpring(PARTICALS[i], PARTICALS[i + Width * 2]);
+                spring.transform.parent = gameObject.transform;
+                float l = CalcDis(PARTICALS[i].transform.position, PARTICALS[i + Width * 2].transform.position);
+                spring.MakeSpring(PARTICALS[i], PARTICALS[i + Width * 2], l);
                 SPRINGS.Add(spring);
             }
 
@@ -65,8 +79,9 @@ public class ClothBehavior : MonoBehaviour
             if (((i % Width) != (Width - 1)) && ( i < ((Width * Height) - Height)))
             {
                 SpringDamper spring = Instantiate(SpringsPrefab);
-                Debug.Log("Dag Down");
-                spring.MakeSpring(PARTICALS[i], PARTICALS[i + Width +1]);
+                spring.transform.parent = gameObject.transform;
+                float l = CalcDis(PARTICALS[i].transform.position, PARTICALS[i + Width + 1].transform.position);
+                spring.MakeSpring(PARTICALS[i], PARTICALS[i + Width +1], l);
                 SPRINGS.Add(spring);
             }
 
@@ -74,8 +89,9 @@ public class ClothBehavior : MonoBehaviour
             if((i % Width != 0) && (i < (Width * Height) - Height))
             {
                 SpringDamper spring = Instantiate(SpringsPrefab);
-                Debug.Log("Dag Up");
-                spring.MakeSpring(PARTICALS[i], PARTICALS[i + Width - 1]);
+                spring.transform.parent = gameObject.transform;
+                float l = CalcDis(PARTICALS[i].transform.position, PARTICALS[i + Width - 1].transform.position);
+                spring.MakeSpring(PARTICALS[i], PARTICALS[i + Width - 1], l);
                 SPRINGS.Add(spring);
             }
         }
@@ -85,7 +101,6 @@ public class ClothBehavior : MonoBehaviour
     [ContextMenu ("SpawnPart")]
     void SpawnParticles()
     {
-        int t = 5;
         int y = 0;
         int x = 0;
         int pos = 1;
@@ -95,72 +110,90 @@ public class ClothBehavior : MonoBehaviour
             {
                 Partical partical = Instantiate(ParticalPrefab);
                 partical.gameObject.name = "Node" + pos;
-                partical.pos = pos;
                 x++;
                 pos++;
                 partical.transform.parent = gameObject.transform;
                 PARTICALS.Add(partical);
 
-                partical.m_Pos = new Vector3(j, i, 0);
+                if(drape & !net)
+                {
+                    partical.transform.position = new Vector3(j, i, 0);
+                    if (partical.transform.position == new Vector3(Width - 1, Height - 1, 0) || partical.transform.position == new Vector3(0, Height - 1, 0))
+                    {
+                        partical.locked = true;
+                    }
+                }
+
+                if(net && !drape)
+                {
+                    partical.transform.position = new Vector3(j, 0, i);
+                    if (partical.transform.position == new Vector3(Width - 1, 0, Height - 1) || partical.transform.position == new Vector3(0, 0, Height - 1) ||
+                        partical.transform.position == new Vector3(0, 0, 0) || partical.transform.position == new Vector3(Width - 1, 0, 0))
+                    {
+                        partical.locked = true;
+                    }
+                }
+
                 y++;
             }
             y = 0;
-            t++;
         }
     }
 
-    void ClothMovement()
+    void EulerIntergration(Partical p)
     {
-        foreach(Partical p in PARTICALS)
+        if (!p.locked)
         {
-            p.m_Force = p.m_Mass * new Vector3(0,-9.81f,0);
+            p.m_Acceleration = p.m_Force / p.m_Mass;
+            p.m_Velocity = p.m_Acceleration.normalized * Time.fixedDeltaTime;
+            p.transform.position += p.m_Velocity.normalized * Time.fixedDeltaTime;
+            p.m_Force = Vector3.zero;
         }
-        CalcSpringForce();
-        EulerIntergration();
+
     }
 
-    void EulerIntergration()
+    void CalcSpringForce(SpringDamper s)
     {
-        foreach(Partical p in PARTICALS)
+        Vector3 disBetween = s.p1.transform.position - s.p2.transform.position;
+        Vector3 disBetweenNorm = disBetween.normalized;
+
+        float dis = CalcDis(s.p1.transform.position, s.p2.transform.position);
+        float springForce = -k * (dis - s.l);  
+
+        float v1 = Vector3.Dot(disBetweenNorm, s.p1.transform.position);
+        float v2 = Vector3.Dot(disBetweenNorm, s.p2.transform.position);
+
+        float springDamp = -b * (v1 - v2);
+
+        float Damper = springForce + springDamp;
+
+        Vector3 f1 = Damper * disBetweenNorm;
+        Vector3 f2 = -f1;
+
+        s.p1.m_Force += f1;
+        s.p2.m_Force += f2;
+        s.DrawLines();
+    }
+
+    void FixedUpdate()
+    {
+        Time.timeScale = 2f;
+        Time.fixedDeltaTime = .02f * Time.timeScale;
+
+        foreach (Partical p in PARTICALS)
         {
-            if(p.locked != true)
-            {
-                p.m_Acceleration = p.m_Force / p.m_Mass;
-                p.m_Velocity = p.m_Velocity + p.m_Acceleration * Time.deltaTime;
-                p.m_Pos = p.m_Pos + p.m_Velocity * Time.deltaTime;
-            }
-
+            p.m_Force = p.m_Mass * (Gravity * gCoeficient);
         }
-    }
 
-    void CalcSpringForce()
-    {
-        foreach(SpringDamper s in SPRINGS)
+        foreach (SpringDamper s in SPRINGS)
         {
-            Vector3 disBetween = s.p1.m_Pos - s.p2.m_Pos;
-            Vector3 disBetweenNorm = disBetween.normalized;
-
-            float dis = CalcDis(s.p1.m_Pos, s.p2.m_Pos);
-            float springForce = -s.k * (s.l - dis);
-
-            float v1 = Vector3.Dot(disBetweenNorm, s.p1.m_Pos);
-            float v2 = Vector3.Dot(disBetweenNorm, s.p2.m_Pos);
-
-            float springDamp = -s.b * (v1 - v2);
-
-            float Damper = springForce + springDamp;
-
-            Vector3 f1 = Damper * disBetweenNorm;
-            Vector3 f2 = -f1;
-
-            s.p1.m_Force = f1;
-            s.p2.m_Force = f2;
+            CalcSpringForce(s);
         }
-    }
 
-    void Update()
-    {
-        ClothMovement();
+        foreach (Partical p in PARTICALS)
+        {
+            EulerIntergration(p);
+        }
     }
 
     float CalcDis(Vector3 pos1, Vector3 pos2)
