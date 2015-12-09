@@ -5,10 +5,12 @@ public class SpringDamper : MonoBehaviour
 {
     public float l; //rest length
 
-    public Partical p1;
-    public Partical p2;
+    public Node p1; //node1
+    public Node p2; //node 2
 
-    public void MakeSpring(Partical a, Partical b, float dis)
+    //Creates a spring based on the arguments based in when the spring is being created in the 
+    //Spawn Springs function in Cloth Behavir class
+    public void MakeSpring(Node a, Node b, float dis)
     {
         p1 = a;
         p2 = b;
@@ -16,6 +18,7 @@ public class SpringDamper : MonoBehaviour
         DrawLines();
     }
 
+    //Draws the lines between nodes the spring is connected to
     public void DrawLines()
     {
         Debug.DrawLine(p1.transform.position, p2.transform.position, Color.yellow);

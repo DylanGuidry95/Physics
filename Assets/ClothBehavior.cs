@@ -4,46 +4,60 @@ using System.Collections.Generic;
 public class ClothBehavior : MonoBehaviour
 {
     [Header("GameObjects")]
-    GameObject target;
-    public Partical ParticalPrefab; //used to hold a refrence to are prefab
-    public List<Partical> PARTICALS = new List<Partical>(); //List that hold all of the boids 
+    public Node NodePrefab; //used to hold a refrence to are prefab
+    public List<Node> NODES = new List<Node>(); //List that hold all of the nodes 
     [Space(10)]
     public SpringDamper SpringsPrefab; //used to refrence the spring prefab
     public List<SpringDamper> SPRINGS = new List<SpringDamper>(); //List of all the springs in the system
+    [Space(10)]
+    public AeroDynamics AeroPrefab; //used to refrence the triangle prefab
+    public List<AeroDynamics> TRIANGLES; //List of all the triangles in the simulation
 
     [Header("Size of Cloth")]
     [Space(10)]
     public int Height; //Length of Cloth
     public int Width; //Width of Cloth
 
-    public float gCoeficient;
+    public float gCoeficient; //Adjusts the force of gravity
 
     public Vector3 Gravity;
+    public Vector3 Air; 
 
-    public float k; //tensioin
+    public float vLimit; //Velocity Limit of the nodes
+
+    //Spring
+    public float k; //stiffness
     public float b; //damping factor
 
-    public bool net;
-    public bool drape;
+    //AeroDynamic
+    public float p;             //density of air/water (Constant)
+    public float Cd;            //coeficient of drag for the object (Constant)
+
+    public bool net; //Spawns the Nodes in the shape of a net
+    public bool drape; //Spawns the Nodes in the shape of a drape
 
     // Use this for initialization
     void Start ()
     {
-        SpawnParticles();
+        SpawnNodes();
         SpawnSprings();
+        SpawnTrianlge();
     }
 
+    /// <summary>
+    /// Spawns all springs in the simulation and links them to nodes that follow a set of case checks
+    /// </summary>
     void SpawnSprings()
     {
-        for(int i = 0; i < PARTICALS.Count; i++)
+        for(int i = 0; i < NODES.Count; i++)
         {
             //horizontal
             if ((i % Width) != (Width - 1))
             {
                 SpringDamper spring = Instantiate(SpringsPrefab);
                 spring.transform.parent = gameObject.transform;
-                float l = CalcDis(PARTICALS[i].transform.position, PARTICALS[i + 1].transform.position);
-                spring.MakeSpring(PARTICALS[i], PARTICALS[i + 1], l);
+                float l = CalcDis(NODES[i].transform.position, NODES[i + 1].transform.position);
+                spring.MakeSpring(NODES[i], NODES[i + 1], l);
                 SPRINGS.Add(spring);
             }
 
@@ -51,8 +65,8 @@ public class ClothBehavior : MonoBehaviour
             {
                 SpringDamper spring = Instantiate(SpringsPrefab);
                 spring.transform.parent = gameObject.transform;
-                float l = CalcDis(PARTICALS[i].transform.position, PARTICALS[i + 2].transform.position);
-                spring.MakeSpring(PARTICALS[i], PARTICALS[i + 2], l);
+                float l = CalcDis(NODES[i].transform.position, NODES[i + 2].transform.position);
+                spring.MakeSpring(NODES[i], NODES[i + 2], l);
                 SPRINGS.Add(spring);
             }
 
@@ -61,8 +75,8 @@ public class ClothBehavior : MonoBehaviour
             {
                 SpringDamper spring = Instantiate(SpringsPrefab);
                 spring.transform.parent = gameObject.transform;
-                float l = CalcDis(PARTICALS[i].transform.position, PARTICALS[i + Width].transform.position);
-                spring.MakeSpring(PARTICALS[i], PARTICALS[i + Width], l);
+                float l = CalcDis(NODES[i].transform.position, NODES[i + Width].transform.position);
+                spring.MakeSpring(NODES[i], NODES[i + Width], l);
                 SPRINGS.Add(spring);
             }
 
@@ -70,8 +84,8 @@ public class ClothBehavior : MonoBehaviour
             {
                 SpringDamper spring = Instantiate(SpringsPrefab);
                 spring.transform.parent = gameObject.transform;
-                float l = CalcDis(PARTICALS[i].transform.position, PARTICALS[i + Width * 2].transform.position);
-                spring.MakeSpring(PARTICALS[i], PARTICALS[i + Width * 2], l);
+                float l = CalcDis(NODES[i].transform.position, NODES[i + Width * 2].transform.position);
+                spring.MakeSpring(NODES[i], NODES[i + Width * 2], l);
                 SPRINGS.Add(spring);
             }
 
@@ -80,8 +94,8 @@ public class ClothBehavior : MonoBehaviour
             {
                 SpringDamper spring = Instantiate(SpringsPrefab);
                 spring.transform.parent = gameObject.transform;
-                float l = CalcDis(PARTICALS[i].transform.position, PARTICALS[i + Width + 1].transform.position);
-                spring.MakeSpring(PARTICALS[i], PARTICALS[i + Width +1], l);
+                float l = CalcDis(NODES[i].transform.position, NODES[i + Width + 1].transform.position);
+                spring.MakeSpring(NODES[i], NODES[i + Width +1], l);
                 SPRINGS.Add(spring);
             }
 
@@ -90,16 +104,18 @@ public class ClothBehavior : MonoBehaviour
             {
                 SpringDamper spring = Instantiate(SpringsPrefab);
                 spring.transform.parent = gameObject.transform;
-                float l = CalcDis(PARTICALS[i].transform.position, PARTICALS[i + Width - 1].transform.position);
-                spring.MakeSpring(PARTICALS[i], PARTICALS[i + Width - 1], l);
+                float l = CalcDis(NODES[i].transform.position, NODES[i + Width - 1].transform.position);
+                spring.MakeSpring(NODES[i], NODES[i + Width - 1], l);
                 SPRINGS.Add(spring);
             }
         }
 
     }
 
-    [ContextMenu ("SpawnPart")]
-    void SpawnParticles()
+    /// <summary>
+    /// Spawns all the Nodes in the simulation based on the width and height of the cloth
+    /// </summary>
+    void SpawnNodes()
     {
         int y = 0;
         int x = 0;
@@ -108,29 +124,29 @@ public class ClothBehavior : MonoBehaviour
         {
             for (int j = 0; j < Height; j++)
             {
-                Partical partical = Instantiate(ParticalPrefab);
-                partical.gameObject.name = "Node" + pos;
+                Node Node = Instantiate(NodePrefab);
+                Node.gameObject.name = "Node" + pos;
                 x++;
                 pos++;
-                partical.transform.parent = gameObject.transform;
-                PARTICALS.Add(partical);
+                Node.transform.parent = gameObject.transform;
+                NODES.Add(Node);
 
                 if(drape & !net)
                 {
-                    partical.transform.position = new Vector3(j, i, 0);
-                    if (partical.transform.position == new Vector3(Width - 1, Height - 1, 0) || partical.transform.position == new Vector3(0, Height - 1, 0))
+                    Node.transform.position = new Vector3(j, i, 0);
+                    if (Node.transform.position == new Vector3(Width - 1, Height - 1, 0) || Node.transform.position == new Vector3(0, Height - 1, 0))
                     {
-                        partical.locked = true;
+                        Node.locked = true;
                     }
                 }
 
                 if(net && !drape)
                 {
-                    partical.transform.position = new Vector3(j, 0, i);
-                    if (partical.transform.position == new Vector3(Width - 1, 0, Height - 1) || partical.transform.position == new Vector3(0, 0, Height - 1) ||
-                        partical.transform.position == new Vector3(0, 0, 0) || partical.transform.position == new Vector3(Width - 1, 0, 0))
+                    Node.transform.position = new Vector3(j, 0, i);
+                    if (Node.transform.position == new Vector3(Width - 1, 0, Height - 1) || Node.transform.position == new Vector3(0, 0, Height - 1) ||
+                        Node.transform.position == new Vector3(0, 0, 0) || Node.transform.position == new Vector3(Width - 1, 0, 0))
                     {
-                        partical.locked = true;
+                        Node.locked = true;
                     }
                 }
 
@@ -140,18 +156,62 @@ public class ClothBehavior : MonoBehaviour
         }
     }
 
-    void EulerIntergration(Partical p)
+    /// <summary>
+    /// Spawns all the Triangles in the simulation
+    /// Called in through the start function.
+    /// </summary>
+    void SpawnTrianlge()
+    {
+        for (int i = 0; i < NODES.Count; i++)
+        {
+            if ((i < (Width * Height) - Height) && ((i % Width) != (Width - 1)))
+            {
+                AeroDynamics tri = Instantiate(AeroPrefab);
+                tri.transform.parent = gameObject.transform; 
+                //NW, NE, SW
+                tri.CreateTriangle(NODES[i], NODES[i + 1], NODES[i + Width]);
+                //NW, NE, SE
+                tri.CreateTriangle(NODES[i], NODES[i + 1], NODES[i + Width + 1]);
+                //NE, SW, SE
+                tri.CreateTriangle(NODES[i + 1], NODES[i + Width], NODES[i + Width + 1]);
+                //NW, SW, SE
+                tri.CreateTriangle(NODES[i], NODES[i + Width], NODES[i + Width + 1]);
+                TRIANGLES.Add(tri);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Intergrates motion for each node in the simulation
+    /// 
+    /// These vectors are only calculated if the node is not locked in place
+    /// 
+    /// Intergrates motion into the simulation
+    /// Acceleration = force / mass
+    /// Velocity = Acceleration * DeltaTime
+    /// Position = current Position + Velocity normalized * DeltaTime
+    /// Zero out the force
+    /// </summary>
+    /// <param name="p"></param>
+    void EulerIntergration(Node p)
     {
         if (!p.locked)
         {
-            p.m_Acceleration = p.m_Force / p.m_Mass;
-            p.m_Velocity = p.m_Acceleration.normalized * Time.fixedDeltaTime;
-            p.transform.position += p.m_Velocity.normalized * Time.fixedDeltaTime;
+            p.m_Acceleration = (p.m_Force / p.m_Mass);
+            p.m_Velocity += p.m_Acceleration * Time.deltaTime;
+            if (p.m_Velocity.magnitude > vLimit)
+            {
+                p.m_Velocity = p.m_Velocity.normalized;
+            }
+            p.transform.position += p.m_Velocity * Time.deltaTime;
             p.m_Force = Vector3.zero;
         }
-
     }
 
+    /// <summary>
+    /// Calculates the Spring Force of each spring in the simulation
+    /// </summary>
+    /// <param name="s"></param>
     void CalcSpringForce(SpringDamper s)
     {
         Vector3 disBetween = s.p1.transform.position - s.p2.transform.position;
@@ -175,27 +235,64 @@ public class ClothBehavior : MonoBehaviour
         s.DrawLines();
     }
 
+    void CalcAeroForce(AeroDynamics a)
+    {
+        Vector3 velocity = (a.p1.m_Velocity + a.p2.m_Velocity + a.p3.m_Velocity) / 3;
+        Vector3 relativeVelocity = velocity - Air;
+
+        Vector3 disBetweenP2P1 = a.p2.transform.position - a.p2.transform.position;
+        Vector3 normalP2P1 = disBetweenP2P1 / disBetweenP2P1.magnitude;
+        Vector3 disBetweenP3P1 = a.p3.transform.position - a.p1.transform.position;
+        Vector3 normalP3P1 = disBetweenP3P1 / disBetweenP3P1.magnitude;
+        float normal = Vector3.Dot(normalP2P1, normalP3P1);
+
+        float area = 0.5f * (normalP2P1.magnitude);
+        a.a = area * ((velocity * normal) / velocity.magnitude);
+
+
+        a.DrawTrianlge();
+    }
+
+    /// <summary>
+    /// Steps for cloth simulation
+    /// 1) Compute Forces
+    ///     - For each node apply gravity
+    ///     - for each spring compute and apply forces
+    ///     - for each triangle compute and apply aerodynamic forces
+    /// 
+    /// 2)Integrate Motion
+    ///     - for each Node apply forward Euler Integration
+    /// </summary>
     void FixedUpdate()
     {
-        Time.timeScale = 2f;
-        Time.fixedDeltaTime = .02f * Time.timeScale;
+        Time.timeScale = .7f;
+        Time.fixedDeltaTime = .01f * Time.timeScale;
 
-        foreach (Partical p in PARTICALS)
+        //Applies gravity to each Node
+        foreach (Node p in NODES)
         {
-            p.m_Force = p.m_Mass * (Gravity * gCoeficient);
+            p.m_Force += p.m_Mass * (Gravity * gCoeficient);
         }
 
+        //Computes and Applies forces for each spring
         foreach (SpringDamper s in SPRINGS)
         {
             CalcSpringForce(s);
         }
 
-        foreach (Partical p in PARTICALS)
+        foreach (AeroDynamics a in TRIANGLES)
+        {
+            CalcAeroForce(a);
+        }
+
+        //Applies Euler Intergration to each node
+        foreach (Node p in NODES)
         {
             EulerIntergration(p);
         }
     }
 
+    //Calculate distance between to vector3
     float CalcDis(Vector3 pos1, Vector3 pos2)
     {
         float dis;
