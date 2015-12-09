@@ -33,8 +33,8 @@ public class ClothBehavior : MonoBehaviour
     public float p;             //density of air/water (Constant)
     public float Cd;            //coeficient of drag for the object (Constant)
 
-    public bool net; //Spawns the Nodes in the shape of a net
     public bool drape; //Spawns the Nodes in the shape of a drape
+    public bool flag; //Spawns the Nodes in the shape of a flag
 
     // Use this for initialization
     void Start ()
@@ -131,7 +131,7 @@ public class ClothBehavior : MonoBehaviour
                 Node.transform.parent = gameObject.transform;
                 NODES.Add(Node);
 
-                if(drape & !net)
+                if(drape)
                 {
                     Node.transform.position = new Vector3(j, i, 0);
                     if (Node.transform.position == new Vector3(Width - 1, Height - 1, 0) || Node.transform.position == new Vector3(0, Height - 1, 0))
@@ -140,7 +140,16 @@ public class ClothBehavior : MonoBehaviour
                     }
                 }
 
-                if(net && !drape)
+                else if(flag)
+                {
+                    Node.transform.position = new Vector3(j, i, 0);
+                    if (Node.transform.position == new Vector3(0, Height - 1, 0) || Node.transform.position == new Vector3(0, 0, 0))
+                    {
+                        Node.locked = true;
+                    }
+                }
+
+                else
                 {
                     Node.transform.position = new Vector3(j, 0, i);
                     if (Node.transform.position == new Vector3(Width - 1, 0, Height - 1) || Node.transform.position == new Vector3(0, 0, Height - 1) ||
@@ -214,14 +223,14 @@ public class ClothBehavior : MonoBehaviour
     /// <param name="s"></param>
     void CalcSpringForce(SpringDamper s)
     {
-        Vector3 disBetween = s.p1.transform.position - s.p2.transform.position;
-        Vector3 disBetweenNorm = disBetween.normalized;
+        Vector3 disBetween = s.p2.transform.position - s.p1.transform.position;
+        Vector3 disBetweenNorm = disBetween.normalized / s.l;
 
-        float dis = CalcDis(s.p1.transform.position, s.p2.transform.position);
-        float springForce = -k * (dis - s.l);  
+        float dis = CalcDis(s.p2.transform.position, s.p1.transform.position);
+        float springForce = -k * (s.l - dis);
 
-        float v1 = Vector3.Dot(disBetweenNorm, s.p1.transform.position);
-        float v2 = Vector3.Dot(disBetweenNorm, s.p2.transform.position);
+        float v1 = Vector3.Dot(disBetween, s.p1.m_Velocity);
+        float v2 = Vector3.Dot(disBetween, s.p2.m_Velocity);
 
         float springDamp = -b * (v1 - v2);
 
@@ -240,15 +249,19 @@ public class ClothBehavior : MonoBehaviour
         Vector3 velocity = (a.p1.m_Velocity + a.p2.m_Velocity + a.p3.m_Velocity) / 3;
         Vector3 relativeVelocity = velocity - Air;
 
-        Vector3 disBetweenP2P1 = a.p2.transform.position - a.p2.transform.position;
-        Vector3 normalP2P1 = disBetweenP2P1 / disBetweenP2P1.magnitude;
-        Vector3 disBetweenP3P1 = a.p3.transform.position - a.p1.transform.position;
-        Vector3 normalP3P1 = disBetweenP3P1 / disBetweenP3P1.magnitude;
-        float normal = Vector3.Dot(normalP2P1, normalP3P1);
+        Vector3 v = a.p2.transform.position - a.p1.transform.position;
+        Vector3 w = a.p3.transform.position - a.p2.transform.position;
+        Vector3 u = Vector3.Cross(v, w);                                    //Normal of the triangle
 
-        float area = 0.5f * (normalP2P1.magnitude);
-        a.a = area * ((velocity * normal) / velocity.magnitude);
+        Vector3 area = 0.5f * u;
+        a.a = area * (Vector3.Dot(relativeVelocity,u) / relativeVelocity.magnitude);
 
+        Vector3 aForce = -0.5f * p * (relativeVelocity.magnitude * relativeVelocity.magnitude) * a.a;
+        Vector3 splitForce = aForce / 3;
+
+        a.p1.m_Force += splitForce;
+        a.p2.m_Force += splitForce;
+        a.p3.m_Force += splitForce;
 
         a.DrawTrianlge();
     }
