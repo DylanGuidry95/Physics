@@ -4,19 +4,38 @@ using UnityEngine.UI;
 
 public class GUI : MonoBehaviour
 {
+    public ClothBehavior Cloth;
+
+    [Header("Wind Controls")]
     public GameObject WindControls;
+    public Slider VerticalWind;
+    public Slider HorizontalWind;
+    public Slider WindSpeed;
+    public Text WindMph;
+
+    [Header("Spring Controls")]
     public GameObject SpringControls;
+    public Slider Stiffness;
+
+    [Header("Gravity Controls")]
     public GameObject GravityControls;
+    public Slider gForce;
+    public Text GravForce;
+
+    [Header("Pause")]
     public GameObject Pause;
+    public Button Exit;
 
     bool windDirty = false;
-    bool SpringDirty = false;
+    bool springDirty = false;
     bool gravDirty = false;
     bool pauseDirty = false;
 
     void OnGUI()
     {
-
+        Wind();
+        Spring();
+        Gravity();
     }
 
 	// Use this for initialization
@@ -34,6 +53,31 @@ public class GUI : MonoBehaviour
         DisplaysOn();
 	}
 
+    void Wind()
+    {
+        Cloth.Air.z = VerticalWind.value;
+        Cloth.Air.x = HorizontalWind.value;
+        Cloth.p = WindSpeed.value;
+
+        WindMph.text = ((int)Cloth.Air.magnitude * Cloth.p).ToString() + "  " + "MpH";
+    }
+
+    void Spring()
+    {
+        Cloth.k = Stiffness.value;
+    }
+
+    void Gravity()
+    {
+        Cloth.gCoeficient = gForce.value; 
+        GravForce.text = (Cloth.gCoeficient * Cloth.Gravity.magnitude).ToString() + "  " + "gForce";
+    }
+
+    public void Close()
+    {
+        Application.Quit();
+    }
+
     void DisplaysOn()
     {
         if(Input.GetKeyDown(KeyCode.W))
@@ -50,14 +94,14 @@ public class GUI : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.S))
         {
-            SpringDirty = !SpringDirty;
-            SpringControls.SetActive(SpringControls);
+            springDirty = !springDirty;
+            SpringControls.SetActive(springDirty);
         }
 
         if (Input.GetKeyDown(KeyCode.P))
         {
-            pauseDirty = !Pause;
-            Pause.SetActive(Pause);
+            pauseDirty = !pauseDirty;
+            Pause.SetActive(pauseDirty);
         }
     }
 }

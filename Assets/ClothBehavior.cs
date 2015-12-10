@@ -4,6 +4,8 @@ using System.Collections.Generic;
 public class ClothBehavior : MonoBehaviour
 {
     #region Variables
+    public GameObject cursorPrefab;
+    GameObject mouse;
     [Header("GameObjects")]
     public Node NodePrefab; //used to hold a refrence to are prefab
     public List<Node> NODES = new List<Node>(); //List that hold all of the nodes 
@@ -44,6 +46,9 @@ public class ClothBehavior : MonoBehaviour
         SpawnNodes();
         SpawnSprings();
         SpawnTrianlge();
+
+        //Spawns the cursor in the scene
+        mouse = Instantiate(cursorPrefab);
     }
 
     /// <summary>
@@ -255,6 +260,10 @@ public class ClothBehavior : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Calculates the force of the wind acting on the cloth
+    /// </summary>
+    /// <param name="a"></param>
     void CalcAeroForce(AeroDynamics a)
     {
         if(a.p1 == null || a.p2 == null || a.p3 == null)
@@ -286,35 +295,6 @@ public class ClothBehavior : MonoBehaviour
         }
     }
 
-    void CheckNodes(Node p)
-    {
-        if(Input.GetKey(KeyCode.W))
-        {
-            if (Input.GetMouseButton(0))
-            {
-                p.m_Force.y += Input.mousePosition.y * (.2f);
-            }
-
-            if (Input.GetMouseButton(1))
-            {
-                p.m_Force.y -= Input.mousePosition.y * (.2f);
-            }
-        }
-
-        if (Input.GetKey(KeyCode.S))
-        {
-            if (Input.GetMouseButton(0))
-            {
-                p.m_Force.x += Input.mousePosition.x * (.2f);
-            }
-
-            if (Input.GetMouseButton(1))
-            {
-                p.m_Force.x -= Input.mousePosition.x * (.2f);
-            }
-        }
-    }
-
     /// <summary>
     /// Steps for cloth simulation
     /// 1) Compute Forces
@@ -327,6 +307,7 @@ public class ClothBehavior : MonoBehaviour
     /// </summary>
     void FixedUpdate()
     {
+        Cursor();
         Time.timeScale = .7f;
         Time.fixedDeltaTime = .01f * Time.timeScale;
 
@@ -369,21 +350,37 @@ public class ClothBehavior : MonoBehaviour
             }
 
         }
-
-        foreach(Node p in NODES)
-        {
-            CheckNodes(p);
-        }
     }
 
+    /// <summary>
+    /// Deletes the springs as they are torn from the cloth
+    /// </summary>
+    /// <param name="s"></param>
     void TearCloth(SpringDamper s)
     {
         if (CalcDis(s.p1.transform.position, s.p2.transform.position) > s.l * 5)
         {
-            SPRINGS.Remove(s);
+            Destroy(s.spring);
             Destroy(s);
+            SPRINGS.Remove(s);
+
         }
-        
+    }
+
+    /// <summary>
+    /// Spawns a cursor in the middle of the screen and is used to grab and tear the cloth
+    /// </summary>
+    void Cursor()
+    {
+        mouse.transform.position = Camera.main.transform.position + Camera.main.transform.forward * Camera.main.transform.position.magnitude;
+
+        foreach(Node p in NODES)
+        {
+            if (Input.GetKey(KeyCode.T) && CalcDis(mouse.transform.position, p.transform.position) < 1)
+            {
+                p.transform.position = mouse.transform.position;
+            }
+        }
 
     }
 
