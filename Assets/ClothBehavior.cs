@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 public class ClothBehavior : MonoBehaviour
 {
+    #region Variables
     [Header("GameObjects")]
     public Node NodePrefab; //used to hold a refrence to are prefab
     public List<Node> NODES = new List<Node>(); //List that hold all of the nodes 
@@ -21,7 +22,7 @@ public class ClothBehavior : MonoBehaviour
     public float gCoeficient; //Adjusts the force of gravity
 
     public Vector3 Gravity;
-    public Vector3 Air; 
+    public Vector3 Air;
 
     public float vLimit; //Velocity Limit of the nodes
 
@@ -35,6 +36,7 @@ public class ClothBehavior : MonoBehaviour
 
     public bool drape; //Spawns the Nodes in the shape of a drape
     public bool flag; //Spawns the Nodes in the shape of a flag
+    #endregion
 
     // Use this for initialization
     void Start ()
@@ -223,47 +225,94 @@ public class ClothBehavior : MonoBehaviour
     /// <param name="s"></param>
     void CalcSpringForce(SpringDamper s)
     {
-        Vector3 disBetween = s.p2.transform.position - s.p1.transform.position;
-        Vector3 disBetweenNorm = disBetween.normalized / s.l;
+        if (s.p1 == null || s.p2 == null)
+        {
+            Destroy(s.gameObject);
+            SPRINGS.Remove(s);
+        }
 
-        float dis = CalcDis(s.p2.transform.position, s.p1.transform.position);
-        float springForce = -k * (s.l - dis);
+        else
+        {
+            Vector3 disBetween = s.p2.transform.position - s.p1.transform.position;
+            Vector3 disBetweenNorm = disBetween.normalized / s.l;
 
-        float v1 = Vector3.Dot(disBetween, s.p1.m_Velocity);
-        float v2 = Vector3.Dot(disBetween, s.p2.m_Velocity);
+            float dis = CalcDis(s.p2.transform.position, s.p1.transform.position);
+            float springForce = -k * (s.l - dis);
 
-        float springDamp = -b * (v1 - v2);
+            float v1 = Vector3.Dot(disBetween, s.p1.m_Velocity);
+            float v2 = Vector3.Dot(disBetween, s.p2.m_Velocity);
 
-        float Damper = springForce + springDamp;
+            float springDamp = -b * (v1 - v2);
 
-        Vector3 f1 = Damper * disBetweenNorm;
-        Vector3 f2 = -f1;
+            float Damper = springForce + springDamp;
 
-        s.p1.m_Force += f1;
-        s.p2.m_Force += f2;
-        s.DrawLines();
+            Vector3 f1 = Damper * disBetweenNorm;
+            Vector3 f2 = -f1;
+
+            s.p1.m_Force += f1;
+            s.p2.m_Force += f2;
+            s.DrawLines();
+        }
     }
 
     void CalcAeroForce(AeroDynamics a)
     {
-        Vector3 velocity = (a.p1.m_Velocity + a.p2.m_Velocity + a.p3.m_Velocity) / 3;
-        Vector3 relativeVelocity = velocity - Air;
+        if(a.p1 == null || a.p2 == null || a.p3 == null)
+        {
+            Destroy(a.gameObject);
+            TRIANGLES.Remove(a);
+        }
 
-        Vector3 v = a.p2.transform.position - a.p1.transform.position;
-        Vector3 w = a.p3.transform.position - a.p2.transform.position;
-        Vector3 u = Vector3.Cross(v, w);                                    //Normal of the triangle
+        else
+        {
+            Vector3 velocity = (a.p1.m_Velocity + a.p2.m_Velocity + a.p3.m_Velocity) / 3;
+            Vector3 relativeVelocity = velocity - Air;
 
-        Vector3 area = 0.5f * u;
-        a.a = area * (Vector3.Dot(relativeVelocity,u) / relativeVelocity.magnitude);
+            Vector3 v = a.p2.transform.position - a.p1.transform.position;
+            Vector3 w = a.p3.transform.position - a.p1.transform.position;
+            Vector3 vNorm = v.normalized;
+            Vector3 wNorm = w.normalized;
+            Vector3 u = Vector3.Cross(vNorm, wNorm);                                    //Normal of the triangle
 
-        Vector3 aForce = -0.5f * p * (relativeVelocity.magnitude * relativeVelocity.magnitude) * a.a;
-        Vector3 splitForce = aForce / 3;
+            Vector3 area = 0.5f * u;
+            a.a = area * (Vector3.Dot(relativeVelocity, u) / relativeVelocity.magnitude);
 
-        a.p1.m_Force += splitForce;
-        a.p2.m_Force += splitForce;
-        a.p3.m_Force += splitForce;
+            Vector3 aForce = -0.5f * p * (relativeVelocity.magnitude) * Cd * a.a;
+            Vector3 splitForce = aForce / 3;
 
-        a.DrawTrianlge();
+            a.p1.m_Force += splitForce;
+            a.p2.m_Force += splitForce;
+            a.p3.m_Force += splitForce;
+        }
+    }
+
+    void CheckNodes(Node p)
+    {
+        if(Input.GetKey(KeyCode.W))
+        {
+            if (Input.GetMouseButton(0))
+            {
+                p.m_Force.y += Input.mousePosition.y * (.2f);
+            }
+
+            if (Input.GetMouseButton(1))
+            {
+                p.m_Force.y -= Input.mousePosition.y * (.2f);
+            }
+        }
+
+        if (Input.GetKey(KeyCode.S))
+        {
+            if (Input.GetMouseButton(0))
+            {
+                p.m_Force.x += Input.mousePosition.x * (.2f);
+            }
+
+            if (Input.GetMouseButton(1))
+            {
+                p.m_Force.x -= Input.mousePosition.x * (.2f);
+            }
+        }
     }
 
     /// <summary>
@@ -284,13 +333,22 @@ public class ClothBehavior : MonoBehaviour
         //Applies gravity to each Node
         foreach (Node p in NODES)
         {
-            p.m_Force += p.m_Mass * (Gravity * gCoeficient);
+            if(p == null)
+            {
+                NODES.Remove(p);
+            }
+            else
+            {
+                p.m_Force += p.m_Mass * (Gravity * gCoeficient);
+            }
+
         }
 
         //Computes and Applies forces for each spring
         foreach (SpringDamper s in SPRINGS)
         {
             CalcSpringForce(s);
+            TearCloth(s);
         }
 
         foreach (AeroDynamics a in TRIANGLES)
@@ -301,8 +359,32 @@ public class ClothBehavior : MonoBehaviour
         //Applies Euler Intergration to each node
         foreach (Node p in NODES)
         {
-            EulerIntergration(p);
+            if (p == null)
+            {
+                NODES.Remove(p);
+            }
+            else
+            {
+                EulerIntergration(p);
+            }
+
         }
+
+        foreach(Node p in NODES)
+        {
+            CheckNodes(p);
+        }
+    }
+
+    void TearCloth(SpringDamper s)
+    {
+        if (CalcDis(s.p1.transform.position, s.p2.transform.position) > s.l * 5)
+        {
+            SPRINGS.Remove(s);
+            Destroy(s);
+        }
+        
+
     }
 
     //Calculate distance between to vector3

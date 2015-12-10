@@ -4,27 +4,60 @@ using UnityEngine.UI;
 
 public class GUI : MonoBehaviour
 {
-    public Slider gravityMod;
-    public Slider windMod;
-    public Slider stiffnessMod;
+    public GameObject WindControls;
+    public GameObject SpringControls;
+    public GameObject GravityControls;
+    public GameObject Pause;
 
-    public ClothBehavior Cloth;
+    bool windDirty = false;
+    bool SpringDirty = false;
+    bool gravDirty = false;
+    bool pauseDirty = false;
 
-    void OnGui()
+    void OnGUI()
     {
-        Cloth.gCoeficient = gravityMod.value;
-        Cloth.p = windMod.value;
-        Cloth.k = stiffnessMod.value;
+
     }
 
 	// Use this for initialization
 	void Start ()
     {
-        Cloth = (ClothBehavior)FindObjectOfType(typeof(ClothBehavior));
+        WindControls.SetActive(false);
+        SpringControls.SetActive(false);
+        GravityControls.SetActive(false);
+        Pause.SetActive(false);
 	}
 	
 	// Update is called once per frame
-	void Update () {
-	
+	void Update ()
+    {
+        DisplaysOn();
 	}
+
+    void DisplaysOn()
+    {
+        if(Input.GetKeyDown(KeyCode.W))
+        {
+            windDirty = !windDirty;
+            WindControls.SetActive(windDirty);
+        }
+
+        if (Input.GetKeyDown(KeyCode.G))
+        {
+            gravDirty = !gravDirty;
+            GravityControls.SetActive(gravDirty);
+        }
+
+        if (Input.GetKeyDown(KeyCode.S))
+        {
+            SpringDirty = !SpringDirty;
+            SpringControls.SetActive(SpringControls);
+        }
+
+        if (Input.GetKeyDown(KeyCode.P))
+        {
+            pauseDirty = !Pause;
+            Pause.SetActive(Pause);
+        }
+    }
 }

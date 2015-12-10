@@ -18,14 +18,5 @@ public class AeroDynamics : MonoBehaviour
         p1 = a;
         p2 = b;
         p3 = c;
-        DrawTrianlge();
-    }
-
-    //Draws lines between the three points of the triangle
-    public void DrawTrianlge()
-    {
-        //Debug.DrawLine(p1.transform.position, p2.transform.position, Color.green);
-        //Debug.DrawLine(p2.transform.position, p3.transform.position, Color.green);
-        //Debug.DrawLine(p3.transform.position, p1.transform.position, Color.green);
     }
 }

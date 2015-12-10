@@ -23,7 +23,7 @@ public class SpringDamper : MonoBehaviour
     //Draws the lines between nodes the spring is connected to
     public void DrawLines()
     {
-        spring.SetPosition(0, p1.transform.position);
-        spring.SetPosition(1, p2.transform.position);
+        //spring.SetPosition(0, p1.transform.position);
+        //spring.SetPosition(1, p2.transform.position);
     }
 }
