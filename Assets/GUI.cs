@@ -23,13 +23,12 @@ public class GUI : MonoBehaviour
     public Text GravForce;
 
     [Header("Pause")]
-    public GameObject Pause;
-    public Button Exit;
+    public GameObject Help;
 
     bool windDirty = false;
     bool springDirty = false;
     bool gravDirty = false;
-    bool pauseDirty = false;
+    bool helpDirty = false;
 
     void OnGUI()
     {
@@ -44,14 +43,24 @@ public class GUI : MonoBehaviour
         WindControls.SetActive(false);
         SpringControls.SetActive(false);
         GravityControls.SetActive(false);
-        Pause.SetActive(false);
+        Help.SetActive(false); 
 	}
 	
 	// Update is called once per frame
 	void Update ()
     {
         DisplaysOn();
-	}
+        if (helpDirty == true || springDirty == true || gravDirty == true || windDirty == true)
+        {
+            Debug.Log("cursor on");
+            Cursor.visible = true;
+        }
+        else
+        {
+            Debug.Log("cursor off");
+            Cursor.visible = false;
+        }
+    }
 
     void Wind()
     {
@@ -78,6 +87,11 @@ public class GUI : MonoBehaviour
         Application.Quit();
     }
 
+    public void Reload()
+    {
+        Application.LoadLevel(0);
+    }
+
     void DisplaysOn()
     {
         if(Input.GetKeyDown(KeyCode.W))
@@ -100,8 +114,8 @@ public class GUI : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.P))
         {
-            pauseDirty = !pauseDirty;
-            Pause.SetActive(pauseDirty);
+            helpDirty = !helpDirty;
+            Help.SetActive(helpDirty);
         }
     }
 }

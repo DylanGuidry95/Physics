@@ -49,6 +49,7 @@ public class ClothBehavior : MonoBehaviour
 
         //Spawns the cursor in the scene
         mouse = Instantiate(cursorPrefab);
+        mouse.transform.position = new Vector3(Screen.width / 2, Screen.height / 2, 0);
     }
 
     /// <summary>
@@ -307,7 +308,7 @@ public class ClothBehavior : MonoBehaviour
     /// </summary>
     void FixedUpdate()
     {
-        Cursor();
+        CursorMovement();
         Time.timeScale = .7f;
         Time.fixedDeltaTime = .01f * Time.timeScale;
 
@@ -370,13 +371,24 @@ public class ClothBehavior : MonoBehaviour
     /// <summary>
     /// Spawns a cursor in the middle of the screen and is used to grab and tear the cloth
     /// </summary>
-    void Cursor()
+    void CursorMovement()
     {
-        mouse.transform.position = Camera.main.transform.position + Camera.main.transform.forward * Camera.main.transform.position.magnitude;
+        Vector3 moveSpace = new Vector3(Camera.main.pixelWidth / 2, Camera.main.pixelHeight / 2, 1);
+ 
+        mouse.transform.position = (moveSpace - Input.mousePosition) * -0.15f;
 
-        foreach(Node p in NODES)
+        if(Cursor.visible == true)
         {
-            if (Input.GetKey(KeyCode.T) && CalcDis(mouse.transform.position, p.transform.position) < 1)
+            mouse.SetActive(false);
+        }
+        else
+        {
+            mouse.SetActive(true);
+        }
+
+        foreach (Node p in NODES)
+        {
+            if (Input.GetMouseButton(0) && CalcDis(mouse.transform.position, p.transform.position) < 1)
             {
                 p.transform.position = mouse.transform.position;
             }
