@@ -4,8 +4,6 @@ using System.Collections.Generic;
 public class ClothBehavior : MonoBehaviour
 {
     #region Variables
-    public GameObject cursorPrefab;
-    GameObject mouse;
     [Header("GameObjects")]
     public Node NodePrefab; //used to hold a refrence to are prefab
     public List<Node> NODES = new List<Node>(); //List that hold all of the nodes 
@@ -20,6 +18,7 @@ public class ClothBehavior : MonoBehaviour
     [Space(10)]
     public int Height; //Length of Cloth
     public int Width; //Width of Cloth
+    public int nodes = 0; //Num nodes in a row
 
     public float gCoeficient; //Adjusts the force of gravity
 
@@ -32,24 +31,20 @@ public class ClothBehavior : MonoBehaviour
     public float k; //stiffness
     public float b; //damping factor
 
+    public int x, y;
+
     //AeroDynamic
     public float p;             //density of air/water (Constant)
     public float Cd;            //coeficient of drag for the object (Constant)
 
     public bool drape; //Spawns the Nodes in the shape of a drape
     public bool flag; //Spawns the Nodes in the shape of a flag
-    #endregion
 
+    #endregion
     // Use this for initialization
     void Start ()
     {
         SpawnNodes();
-        SpawnSprings();
-        SpawnTrianlge();
-
-        //Spawns the cursor in the scene
-        mouse = Instantiate(cursorPrefab);
-        mouse.transform.position = new Vector3(Screen.width / 2, Screen.height / 2, 0);
     }
 
     /// <summary>
@@ -57,7 +52,7 @@ public class ClothBehavior : MonoBehaviour
     /// </summary>
     void SpawnSprings()
     {
-        for(int i = 0; i < NODES.Count; i++)
+        for (int i = 0; i < NODES.Count; i++)
         {
             //horizontal
             if ((i % Width) != (Width - 1))
@@ -117,7 +112,7 @@ public class ClothBehavior : MonoBehaviour
                 SPRINGS.Add(spring);
             }
         }
-
+        SpawnTrianlge();
     }
 
     /// <summary>
@@ -125,8 +120,6 @@ public class ClothBehavior : MonoBehaviour
     /// </summary>
     void SpawnNodes()
     {
-        int y = 0;
-        int x = 0;
         int pos = 1;
         for (int i = 0; i < Width; i++)
         {
@@ -134,14 +127,15 @@ public class ClothBehavior : MonoBehaviour
             {
                 Node Node = Instantiate(NodePrefab);
                 Node.gameObject.name = "Node" + pos;
-                x++;
+                
                 pos++;
+
                 Node.transform.parent = gameObject.transform;
                 NODES.Add(Node);
 
                 if(drape)
                 {
-                    Node.transform.position = new Vector3(j, i, 0);
+                    Node.transform.position = new Vector3(j + y, i + x, 0);
                     if (Node.transform.position == new Vector3(Width - 1, Height - 1, 0) || Node.transform.position == new Vector3(0, Height - 1, 0))
                     {
                         Node.locked = true;
@@ -167,10 +161,11 @@ public class ClothBehavior : MonoBehaviour
                     }
                 }
 
-                y++;
+                
             }
-            y = 0;
+
         }
+        SpawnSprings();
     }
 
     /// <summary>
@@ -184,7 +179,7 @@ public class ClothBehavior : MonoBehaviour
             if ((i < (Width * Height) - Height) && ((i % Width) != (Width - 1)))
             {
                 AeroDynamics tri = Instantiate(AeroPrefab);
-                tri.transform.parent = gameObject.transform; 
+                tri.transform.parent = gameObject.transform;
                 //NW, NE, SW
                 tri.CreateTriangle(NODES[i], NODES[i + 1], NODES[i + Width]);
                 //NW, NE, SE
@@ -233,8 +228,8 @@ public class ClothBehavior : MonoBehaviour
     {
         if (s.p1 == null || s.p2 == null)
         {
-            Destroy(s.gameObject);
             SPRINGS.Remove(s);
+            Destroy(s.gameObject);
         }
 
         else
@@ -267,10 +262,10 @@ public class ClothBehavior : MonoBehaviour
     /// <param name="a"></param>
     void CalcAeroForce(AeroDynamics a)
     {
-        if(a.p1 == null || a.p2 == null || a.p3 == null)
+        if (a.p1 == null || a.p2 == null || a.p3 == null)
         {
-            Destroy(a.gameObject);
             TRIANGLES.Remove(a);
+            Destroy(a.gameObject);
         }
 
         else
@@ -306,16 +301,12 @@ public class ClothBehavior : MonoBehaviour
     /// 2)Integrate Motion
     ///     - for each Node apply forward Euler Integration
     /// </summary>
-    void FixedUpdate()
+    void Update()
     {
-        CursorMovement();
-        Time.timeScale = .7f;
-        Time.fixedDeltaTime = .01f * Time.timeScale;
-
         //Applies gravity to each Node
         foreach (Node p in NODES)
         {
-            if(p == null)
+            if (p == null)
             {
                 NODES.Remove(p);
             }
@@ -330,7 +321,13 @@ public class ClothBehavior : MonoBehaviour
         foreach (SpringDamper s in SPRINGS)
         {
             CalcSpringForce(s);
-            TearCloth(s);
+            if (CalcDis(s.p1.transform.position, s.p2.transform.position) > s.l * 5)
+            {
+                SPRINGS.Remove(s);
+                Destroy(s.spring);
+                Destroy(s);
+                break;
+            }
         }
 
         foreach (AeroDynamics a in TRIANGLES)
@@ -353,51 +350,13 @@ public class ClothBehavior : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Deletes the springs as they are torn from the cloth
-    /// </summary>
-    /// <param name="s"></param>
-    void TearCloth(SpringDamper s)
+    public void AddCloth()
     {
-        if (CalcDis(s.p1.transform.position, s.p2.transform.position) > s.l * 5)
-        {
-            Destroy(s.spring);
-            Destroy(s);
-            SPRINGS.Remove(s);
-
-        }
-    }
-
-    /// <summary>
-    /// Spawns a cursor in the middle of the screen and is used to grab and tear the cloth
-    /// </summary>
-    void CursorMovement()
-    {
-        Vector3 moveSpace = new Vector3(Camera.main.pixelWidth / 2, Camera.main.pixelHeight / 2, 1);
- 
-        mouse.transform.position = (moveSpace - Input.mousePosition) * -0.15f;
-
-        if(Cursor.visible == true)
-        {
-            mouse.SetActive(false);
-        }
-        else
-        {
-            mouse.SetActive(true);
-        }
-
-        foreach (Node p in NODES)
-        {
-            if (Input.GetMouseButton(0) && CalcDis(mouse.transform.position, p.transform.position) < 1)
-            {
-                p.transform.position = mouse.transform.position;
-            }
-        }
-
+        SpawnNodes();
     }
 
     //Calculate distance between to vector3
-    float CalcDis(Vector3 pos1, Vector3 pos2)
+    public float CalcDis(Vector3 pos1, Vector3 pos2)
     {
         float dis;
         dis = ((pos2.y - pos1.y) * (pos2.y - pos1.y)) + ((pos2.x - pos1.x) * (pos2.x - pos1.x)) + ((pos2.z - pos1.z) * (pos2.z - pos1.z));
