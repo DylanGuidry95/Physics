@@ -7,8 +7,52 @@
     <link rel="stylesheet" href="TemplateData/style.css">
     <link rel="shortcut icon" href="TemplateData/favicon.ico" />
     <script src="TemplateData/UnityProgress.js"></script>
+	    <style>
+        #body
+        {
+            background-color:gray;
+        }
+        #header 
+        {
+            border: 2px solid black;
+            margin-bottom:5px;
+            background-color:gray;
+            color:black;
+            text-align:center;
+            padding:10px;
+        }
+		#Section
+		{
+			margin-bottom: 5px;
+			background-color:gray;
+			color:black;
+			text-align:center;
+            padding:10px;
+		}
+		#BreakDown
+		{
+			margin-left:150px;
+			margin-bottom: 5px;
+			margin-right:150px;
+			background-color:gray;
+			color:black;
+			text-align:left;
+            padding:10px;
+		}
+		#Game
+		{
+			margin-bottom: 5px;
+			background-color:white;
+            padding:350px;
+		}
+    </style>
   </head>
+  <div id = "header">
+  <h1><font size = "20px"><b><u>Cloth Simulation</u></b></font></h1>
+  </div>
+  <div id = "Game">
   <body class="template">
+	<h1> 
     <p class="header"><span>Unity WebGL Player | </span>Physics</p>
     <div class="template-wrap clear">
     <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" height="600px" width="960px"></canvas>
@@ -101,5 +145,118 @@ try {
   codeXHR.send(null);
 }
 </script>
+  </div>
+  <div id = "Section">
+  <h2><font size = "6px"><b>I: Requirements Documentation</b></font></h2>
+  </div>
+  <div id = "BreakDown">
+	<p>
+	<font size = "4px"> <b>1.1: Description of the Problem</b> </font> <br>
+	<pre><font size = "4px">
+Name: Cloth Simulation 
+Problem Statement: Implement and calculate the various forces that take place in a cloth simulation. 
+	</font></pre>
+	<font size = "4px"> <b>1.2: Input Information</b> </font> <br>
+	<pre><font size = "4px">
+Controls: Mouse and Keyboard 
+	W - Enables/Disables Wind Controls GUI Elements 
+	S - Enables/Disables Spring Controls GUI Elements 
+	G - Enables/Disables Gravity Controls GUI Elements 
+	P - Enables/Disables Pause Menu GUI Elements 
+	R - Resets Camera 
+	Right Mouse Button - Grabs Cloth 
+	Left Mouse Button - Move Camera 
+	Scroll Wheel - Rotate Camera 
+	</font></pre>
+	<font size = "4px"> <b>1.3: Output Information</b> </font> <br>
+	<pre><font size = "4px">
+The program will display a simulation of what cloth should behave like in the real world we live in.
+	</font></pre>
+	<font size = "4px"> <b>1.4: User Interface</b> </font> <br>
+		<pre><font size = "4px">
+Wind Controls Panel
+	Wind Direction Sliders - Determines the direction the force of the wind will be applied in.
+	Wind Speed Slider - Determines how hard the wind will be blowing.
+Spring Controls Panel
+	Spring Stiffness Slider - Adjusts the stiffness of the springs of the cloth. 
+Gravity Controls Panel
+	Gravity Modifier - Modifies the strength of gravity in the system.
+Pause Menu
+	Quit - Closes the application(Only if using .exe).
+	Reload - Reloads the level.
+Cloth Controls Panel
+	Cloth Size Slider - Modifies the size the colth will be.
+	Gen Cloth Button - Generates the cloth with the new size set by the slider.
+	</font></pre>
+  </div>
+  <div id = "Section">
+    <h2><font size = "6px"><b>II: Design Documentation</b></font></h2>
+  </div>
+  <div id = "BreakDown">
+	<p>
+		<font size = "4px"> <b>2.1: System Architecture Description</b> </font> <br>
+		<pre><font size = "4px">
+The program is divided up into 5 classes (SpringDamper.cs, ClothBehavior.cs, AeroDynamics,
+GUI.cs and Node.cs).The ClothBehavior class is responsible for handling all calculations for both
+the springs and the nodes in the simulation. The GUI handles all of the on screen sliders and HUD
+element the user can interact with the adjust the behavior of the cloth.
+		</font></pre>
+		<font size = "4px"> <b>File: Node.cs</b> </font> <br>
+		<pre><font size = "4px">
+	Name: m_Mass(float)
+	Description: Hold the value that represents the mass of a node.
+	
+	Name: m_Velocity(Vector3)
+	Description: Holds the value that represents the current velocity the node is moving at.
+
+	Name: m_Acceleration(Vector3)
+	Description: Holds the value that represents the current acceleration of the node.
+
+	Name: m_Force(Vector3)
+	Description: Hold the values that represents the strength of the force acting on the node.
+
+	Name: locked(bool)
+	Description: Boolean value to show if the node is locked at its starting position.
+		</font></pre>
+		<font size = "4px"> <b>File: AeroDynamics.cs</b> </font> <br>
+		<pre><font size = "4px">
+	Name: p1 (Node)
+	Description: Reference to the first node the triangle is connected to.
+
+	Name: p2 (Node)
+	Description: Reference to the second node the spring is connected to.
+
+	Name: p3 (Node)
+	Description: Reference to the third node the spring is connected to.
+	
+	Name: CreateTriangle(void)
+	Arguments: Node, Node, Node	
+	Description: Takes the nodes passed in through the arguments and assigns them to the Node variables declared in the class. 
+
+	Name: DrawTriangle(void)
+	Arguments: N/A
+	Description: Draws lines that connect the three points of the triangle together.
+	</font></pre>		
+	<font size = "4px"> <b>File: SpringDamper.cs</b> </font> <br>
+	<pre><font size = "4px">
+	Name: l(float)
+	Description: Holds the value used to represent the rest length of the spring.
+
+	Name: p1 (Node)
+	Description: Reference to the first node the spring is connected to. 
+
+	Name: p2 (Node)
+	Description: Reference to the second node the spring is connected to. 
+
+	Name: MakeSpring(void)
+	Arguments: Node, Node, float
+	Description: Creates a spring based on the arguments based in when the spring is being created in the Spawn Springs function in Cloth Behavior class
+
+	Name: DrawLines(void)
+	Arguments: N/A
+	Description: Draws the lines between nodes the spring is connected to
+	</font></pre>
+	</P>
+  </div>
   </body>
 </html>
