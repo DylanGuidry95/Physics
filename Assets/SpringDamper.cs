@@ -17,7 +17,7 @@ public class SpringDamper : MonoBehaviour
         p1 = a;
         p2 = b;
         l = dis;
-        DrawLines();
+        //DrawLines();
     }
 
     //Draws the lines between nodes the spring is connected to

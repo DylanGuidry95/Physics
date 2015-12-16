@@ -63,7 +63,6 @@ public class ClothBehavior : MonoBehaviour
     /// </summary>
     void SpawnSprings(ref GameObject a)
     {
-        SPRINGS = new List<SpringDamper>();
         for (int i = 0; i < NODES.Count; i++)
         { 
             //horizontal
@@ -133,7 +132,6 @@ public class ClothBehavior : MonoBehaviour
     void SpawnNodes(int x, int y)
     {
         GameObject cloth = new GameObject();
-        NODES = new List<Node>();
         int pos = 1;
         for (int i = 0; i < Width; i++)
         {
@@ -183,7 +181,6 @@ public class ClothBehavior : MonoBehaviour
     /// </summary>
     void SpawnTrianlge(ref GameObject a)
     {
-        TRIANGLES = new List<AeroDynamics>();
         for (int i = 0; i < NODES.Count; i++)
         {
             if ((i < (Width * Height) - Height) && ((i % Width) != (Width - 1)))
@@ -237,34 +234,27 @@ public class ClothBehavior : MonoBehaviour
     /// <param name="s"></param>
     void CalcSpringForce(SpringDamper s)
     {
-        if (s.p1 == null || s.p2 == null)
-        {
-            SPRINGS.Remove(s);
-            Destroy(s.gameObject);
-        }
 
-        else
-        {
-            Vector3 disBetween = s.p2.transform.position - s.p1.transform.position;
-            Vector3 disBetweenNorm = disBetween.normalized / s.l;
+        Vector3 disBetween = s.p2.transform.position - s.p1.transform.position;
+        Vector3 disBetweenNorm = disBetween.normalized / s.l;
 
-            float dis = CalcDis(s.p2.transform.position, s.p1.transform.position);
-            float springForce = -k * (s.l - dis);
+        float dis = CalcDis(s.p2.transform.position, s.p1.transform.position);
+        float springForce = -k * (s.l - dis);
 
-            float v1 = Vector3.Dot(disBetween, s.p1.m_Velocity);
-            float v2 = Vector3.Dot(disBetween, s.p2.m_Velocity);
+        float v1 = Vector3.Dot(disBetween, s.p1.m_Velocity);
+        float v2 = Vector3.Dot(disBetween, s.p2.m_Velocity);
 
-            float springDamp = -b * (v1 - v2);
+        float springDamp = -b * (v1 - v2);
 
-            float Damper = springForce + springDamp;
+        float Damper = springForce + springDamp;
 
-            Vector3 f1 = Damper * disBetweenNorm;
-            Vector3 f2 = -f1;
+        Vector3 f1 = Damper * disBetweenNorm;
+        Vector3 f2 = -f1;
 
-            s.p1.m_Force += f1;
-            s.p2.m_Force += f2;
-            s.DrawLines();
-        }
+        s.p1.m_Force += f1;
+        s.p2.m_Force += f2;
+        s.DrawLines();
+
     }
 
     /// <summary>
@@ -273,33 +263,26 @@ public class ClothBehavior : MonoBehaviour
     /// <param name="a"></param>
     void CalcAeroForce(AeroDynamics a)
     {
-        if (a.p1 == null || a.p2 == null || a.p3 == null)
-        {
-            TRIANGLES.Remove(a);
-            Destroy(a.gameObject);
-        }
 
-        else
-        {
-            Vector3 velocity = (a.p1.m_Velocity + a.p2.m_Velocity + a.p3.m_Velocity) / 3;
-            Vector3 relativeVelocity = velocity - Air;
+        Vector3 velocity = (a.p1.m_Velocity + a.p2.m_Velocity + a.p3.m_Velocity) / 3;
+        Vector3 relativeVelocity = velocity - Air;
 
-            Vector3 v = a.p2.transform.position - a.p1.transform.position;
-            Vector3 w = a.p3.transform.position - a.p1.transform.position;
-            Vector3 vNorm = v.normalized;
-            Vector3 wNorm = w.normalized;
-            Vector3 u = Vector3.Cross(vNorm, wNorm);                                    //Normal of the triangle
+        Vector3 v = a.p2.transform.position - a.p1.transform.position;
+        Vector3 w = a.p3.transform.position - a.p1.transform.position;
+        Vector3 vNorm = v.normalized;
+        Vector3 wNorm = w.normalized;
+        Vector3 u = Vector3.Cross(vNorm, wNorm);                                    //Normal of the triangle
 
-            Vector3 area = 0.5f * u;
-            a.a = area * (Vector3.Dot(relativeVelocity, u));
+        Vector3 area = 0.5f * u;
+        a.a = area * (Vector3.Dot(relativeVelocity, u));
 
-            Vector3 aForce = -0.5f * p * (relativeVelocity.magnitude) * Cd * a.a;
-            Vector3 splitForce = aForce / 3;
+        Vector3 aForce = -0.5f * p * (relativeVelocity.magnitude) * Cd * a.a;
+        Vector3 splitForce = aForce / 3;
 
-            a.p1.m_Force += splitForce;
-            a.p2.m_Force += splitForce;
-            a.p3.m_Force += splitForce;
-        }
+        a.p1.m_Force += splitForce;
+        a.p2.m_Force += splitForce;
+        a.p3.m_Force += splitForce;
+
     }
 
     /// <summary>
@@ -338,13 +321,18 @@ public class ClothBehavior : MonoBehaviour
 
         foreach (AeroDynamics a in TRIANGLES)
         {
+            if(a.p1 == null || a.p2 == null || a.p3 == null)
+            {
+                TRIANGLES.Remove(a);
+                Destroy(a);
+                break;
+            }
             CalcAeroForce(a);
         }
 
         //Applies Euler Intergration to each node
         foreach (Node p in NODES)
         {
-
             EulerIntergration(p);
         }
     }
@@ -383,6 +371,9 @@ public class ClothBehavior : MonoBehaviour
         oldTri = TRIANGLES.ToArray();
         oldNode = NODES.ToArray();
         oldSpring = SPRINGS.ToArray();
+        SPRINGS = new List<SpringDamper>();
+        NODES = new List<Node>();
+        TRIANGLES = new List<AeroDynamics>();
         SpawnNodes(50, 50);
         ClearOld();
     }
