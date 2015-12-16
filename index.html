@@ -23,6 +23,9 @@
         }
 		#Section
 		{
+		    border: 2px solid black;
+			margin-left:150px;
+			margin-right:150px;
 			margin-bottom: 5px;
 			background-color:gray;
 			color:black;
@@ -34,7 +37,7 @@
 			margin-left:150px;
 			margin-bottom: 5px;
 			margin-right:150px;
-			background-color:gray;
+			background-color:white;
 			color:black;
 			text-align:left;
             padding:10px;
@@ -255,6 +258,171 @@ element the user can interact with the adjust the behavior of the cloth.
 	Name: DrawLines(void)
 	Arguments: N/A
 	Description: Draws the lines between nodes the spring is connected to
+	</font></pre>
+	<font size = "4px"> <b>File: GUI.cs</b> </font> <br>
+	<pre><font size = "4px">
+	Name: Cloth (ClothBehavior)
+	Description: Stores a reference to the cloth so we can adjust the coefficients of the various forces acting on the cloth.
+
+	Name: WindControls(GameObject)
+	Description: GameObject that is the parent for all the GUI elements that modify the wind forces.
+
+	Name: VerticalWind(Slider)
+	Description: Adjust the wind blowing from north and south.
+
+	Name: HorizontalWind(Slider)
+	Description: Adjusts the wind blowing from east and west.
+
+	Name: WindSpeed(Slider)
+	Description: Adjusts how strong the wind is blowing in the direction the user specifies with the Vertical and Horizontal wind sliders.
+
+	Name: WindMph(Text)
+	Description: Displays how fast the wind is blowing.
+
+	Name: SpringControls(GameObject)
+	Description: GameObject that is the parents for all GUI elements that modify the spring forces.
+
+	Name: Stiffness(Slider)
+	Description: Adjusts how stiff the springs of the cloth are.
+
+	Name: GravityControls(GameObject)
+	Description: GameObject that is the parent for all GUI elements that modify the force of gravity in the simulation.
+
+	Name: Help(GameObject)
+	Description: GameObject that is the parent for all GUI elements that provide controls and manage application flow.
+
+	Name: windDirty(bool)
+	Description: boolean value that is used to turn the wind GUI elements off.
+		
+	Name: springDirty(bool)
+	Description: boolean value that is used to turn the spring GUI elements off.
+	
+	Name:gravDirty(bool)
+	Description: boolean value that is used to turn the grvity GUI elements off.
+		
+	Name: helpDirty(bool)
+	Description: boolean value that is used to turn the help GUI elements off.
+
+	Name: OnGUI(void)
+	Arguments: N/A
+	Description: Calls in the following functions Wind(), Spring(), and Gravity().
+
+	Name: Start(void)
+	Arguments: N/A
+	Description: Turns off all GUI displays and the mouse cursor.
+
+	Name: Update(void)
+	Arguments: N/A
+	Description: Calls in the DisplaysOn function and checks to see if the mouse cursor should be displayed whether or not other GUI elements are turned on.
+
+	Name: Wind(void)
+	Arguments: N/A
+	Description: Updates the wind coefficients in the ClothBehavior script based on the values of the all the sliders on the Wind Controls panel.
+
+	Name: Spring(void)
+	Arguments: N/A
+	Description: Updates the spring coefficients in the ClothBehavior script based on the values of the all the sliders on the Spring Controls panel.
+	
+	Name: Gravity(void)
+	Arguments: N/A
+	Description: Updates the gravity coefficients in the ClothBehavior script based on the values of the all the sliders on the Gravity Controls panel.
+
+	Name: Close(void)
+	Arguments: N/A
+	Description: Closes the application when the exit button is clicked (Only works when ran through exe not on the internet.)
+
+	Name: Reload()
+	Arguments: N/A
+	Description: Reloads the scene with a fresh cloth for the user to interact with.
+
+	Name:DisplaysOn(void)
+	Arguments: N/A
+	Description: Turns the displays on or off when the key that is assigned to them is pressed.
+	</font></pre>
+	<font size = "4px"> <b>File: ClothBehavior.cs</b> </font> <br>
+	<pre><font size = "4px">
+	Name: NodePrefab(Node)
+	Description: Holds a reference to the node prefab.
+
+	Name: NODES (List<Nodes>)
+	Description: List of all the nodes in the simulation.
+
+	Name: SpringsPrefab(SpringDamper)
+	Description: Holds a reference to the spring prefab
+
+	Name: SPRINGS(List<SpringDamper>)
+	Description: List of all the springs in the simulation
+	Name: AeroPrefab(AeroDynamics)
+	Description: Used to reference the prefab associated with the AeroDynamics class
+
+	Name: TRIANGLES(List<AeroDynamics>)
+	Description: List of all the triangles in the simulation.
+
+	Name: Height(int)
+	Description: Holds the value the represents the height of the cloth.
+
+	Name: Width(int)
+	Description: Holds the value the represents the width of the cloth.
+
+	Name: gCoefficient(float)
+	Description: Coefficient used to modify the pull of gravity.
+
+	Name: Gravity(Vector3)
+	Description: Holds the values used to represent the pull of gravity.
+
+	Name: k(float)
+	Description: Coefficient used to adjust the stiffness of the springs in the simulation.
+
+
+	Name: b(float)
+	Description: Coefficient used to adjust the damping factor of the springs in the simulation
+
+	Name: net(bool)
+	Description: Check to set the way the nodes spawn in the system, in this case in the shape of a net.
+
+	Name:drape(bool)
+	Description: Check to set the way the nodes spawn in the system, in this case in the shape of a drape.
+
+
+	Name: Start(void)
+	Arguments: N/A
+	Description: Calls in the SpawnNodes and SpawnSprings functions when the program starts.
+
+	Name: SpawnSpring(void)
+	Arguments: N/A
+	Description: Spawns all springs in the simulation and links them to nodes that follow a set of case checks.
+
+	Name: SpawnNodes(void)
+	Arguments: N/A
+	Description: Spawns all the Nodes in the simulation based on the width and height of the cloth
+	Name: SpawnTriangles()
+	Arguments: N/A
+	Description: Spawns in all the triangles in the simulation
+
+	Name: EulerIntergration(void)
+	Arguments: Node
+	Description: Integrates motion for each node in the simulation. These vectors are only calculated if the node is not locked in place
+
+	Name: CalcSpringForce(void)
+	Arguments: SpringDamper
+	Description: Calculates the Spring Force of each spring in the simulation
+
+	Name: FixedUpdate(void) 
+	Arguments: N/A
+	Description: Follows the steps of cloth simulation and repeats them every loop to achieve the look of cloth in a simulation.
+
+	Name: TearCloth(void)
+	Arguments: SpringDamper
+	Description: Destroys a spring if the two nodes it is connected to spread to far apart from each other.
+
+	Name: CursorMovement(void)
+	Arguments: N/A
+	Description: Moves the cursor around the screen and allows the user to grab the cloth and pull it around and tear pieces of it off.
+
+	Name: CalcDis(float)
+	Arguments: Vector3, Vector3
+	Description: Calculates the distance between two vector3 values passed in as arguments
+
 	</font></pre>
 	</P>
   </div>
