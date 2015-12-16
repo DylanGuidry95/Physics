@@ -6,6 +6,7 @@ public class ClothBehavior : MonoBehaviour
     #region Variables
     public GameObject cursorPrefab;
     GameObject mouse;
+    public GameObject ground;
     [Header("GameObjects")]
     public Node NodePrefab; //used to hold a refrence to are prefab
     public List<Node> NODES = new List<Node>(); //List that hold all of the nodes 
@@ -334,6 +335,7 @@ public class ClothBehavior : MonoBehaviour
         foreach (Node p in NODES)
         {
             EulerIntergration(p);
+            GroundCheck(p);
         }
     }
 
@@ -376,6 +378,14 @@ public class ClothBehavior : MonoBehaviour
         TRIANGLES = new List<AeroDynamics>();
         SpawnNodes(50, 50);
         ClearOld();
+    }
+
+    void GroundCheck(Node p)
+    {
+        if(p.transform.position.y <= ground.transform.position.y)
+        {
+            p.transform.position = new Vector3(p.transform.position.x,p.transform.position.y + (ground.transform.position.y - p.transform.position.y), p.transform.position.z);
+        }
     }
 
     void ClearOld()
